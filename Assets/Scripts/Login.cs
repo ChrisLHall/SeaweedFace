@@ -15,7 +15,7 @@ public class Login : MonoBehaviour {
     string setErrText;
 
     bool loggedIn;
-    public static KiiUser User = null;
+    public static KiiUser User { get; set; }
 
     void Awake () {
         username = GameObject.Find("Username").GetComponent<InputField>();
@@ -23,6 +23,7 @@ public class Login : MonoBehaviour {
         password = GameObject.Find("Password").GetComponent<InputField>();
         error = GameObject.Find ("Error").GetComponent<Text>();
         loggedIn = false;
+        User = null;
         setErrText = "";
         Kii.Initialize(appId, appKey, Kii.Site.US);
     }

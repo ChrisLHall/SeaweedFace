@@ -27,6 +27,7 @@ public class Player : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+        Debug.Log(Login.User.Username);
         camOffset = transform.FindChild("CamOffset").position
                 - transform.position;
         currentCamOffset = camOffset;
