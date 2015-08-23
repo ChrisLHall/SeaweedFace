@@ -11,13 +11,16 @@ public class Player : MonoBehaviour {
     const float OFFSET_ALPHA = 0.05f;
 
     Vector3 physicsCtrlVec;
-    const float CTRL_VEC_STRENGTH = 2f;
+    const float CTRL_VEC_STRENGTH = 3f;
     const float VERTICAL_OFFSET = 0.5f;
     const float VERTICAL_MULT = 0.7f;
     const float SIDEWAYS_MULT = 0.1f;
     const float MAX_TAP_TIME = 0.4f;
     const float MAX_LONGPRESS_TIME = 2f;
     const float MAX_VELOCITY = 0.3f;
+
+    const float FLOAT_FORCE = 0.2f;
+    const float MAP_BOTTOM = 2f;
 
     void Awake () {
         main = FindObjectOfType<Main>();
@@ -48,22 +51,21 @@ public class Player : MonoBehaviour {
 	}
 
     void FixedUpdate () {
+        Rigidbody rb = GetComponent<Rigidbody>();
         if (physicsCtrlVec != Vector3.zero) {
-            Rigidbody rb = GetComponent<Rigidbody>();
             rb.AddForce(physicsCtrlVec * CTRL_VEC_STRENGTH, ForceMode.Impulse);
             rb.velocity = Vector3.ClampMagnitude(rb.velocity, MAX_VELOCITY);
             physicsCtrlVec = Vector3.zero;
         }
+
+        if (transform.position.y < MAP_BOTTOM) {
+            rb.AddForce(Vector3.up * FLOAT_FORCE, ForceMode.Impulse);
+        }
     }
 
     void FindStartPos() {
-        Vector3 rayStart = transform.position + Vector3.down;
-        RaycastHit hit;
-        Physics.Raycast(new Ray(rayStart, Vector3.down), out hit);
-        // This intends to check whether the cast hit anything
-        if (hit.distance < 100f) {
-            transform.position = hit.point + Vector3.up * 3f;
-        }
+        LevelGen lg = FindObjectOfType<LevelGen>();
+        transform.position = lg.FindSuitableSpawn() + 3f * Vector3.up;
     }
 
     void ProcessControls () {
