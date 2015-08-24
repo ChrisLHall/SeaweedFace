@@ -9,7 +9,6 @@ public class Login : MonoBehaviour {
     public string appKey;
     
     InputField username;
-    InputField email;
     InputField password;
     Text error;
     string setErrText;
@@ -19,7 +18,6 @@ public class Login : MonoBehaviour {
 
     void Awake () {
         username = GameObject.Find("Username").GetComponent<InputField>();
-        email = GameObject.Find("Email").GetComponent<InputField>();
         password = GameObject.Find("Password").GetComponent<InputField>();
         error = GameObject.Find ("Error").GetComponent<Text>();
         loggedIn = false;
@@ -56,6 +54,9 @@ public class Login : MonoBehaviour {
         } else if (password.text.Trim().Length < 8) {
             error.text = "Password must be 8+ characters!";
             return false;
+        } else if (username.text.Trim().StartsWith("NOBODY")) {
+            error.text = "Username cannot start with NOBODY; it is reserved.";
+            return false;
         }
         return true;
     }
@@ -64,8 +65,7 @@ public class Login : MonoBehaviour {
         if (!ValidateLogin()) {
             return;
         }
-        KiiUser.Builder builder = KiiUser.BuilderWithEmail(email.text.Trim());
-        builder.WithName(username.text.Trim());
+        KiiUser.Builder builder = KiiUser.BuilderWithName(username.text.Trim());
         KiiUser user = builder.Build();
         user.Register(password.text.Trim(), UserCreatedCallback);
     }
@@ -77,7 +77,7 @@ public class Login : MonoBehaviour {
             setErrText = "CREATE USER FAILURE: " + exc.Message;
             return;
         }
-        setErrText = "CREATE USER SUCCESS " + callbackUser.Email;
+        setErrText = "CREATE USER SUCCESS " + callbackUser.Username;
         User = callbackUser;
 
         KiiObject origObj = callbackUser.Bucket("worlds").NewKiiObject();

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 public class InventoryGUI : MonoBehaviour {
     TapTarget tt;
+    LevelGen lg;
     List<GameObject> children;
 
     const float MIN_SIGN_SPACING_SQR = 4f;
@@ -13,27 +14,41 @@ public class InventoryGUI : MonoBehaviour {
     bool holdingItem;
     string heldItemType;
     int heldItemInitVal;
-    int heldItemLevel;
 
+    bool ttWasJustActive;
+    Vector3 lastTTPos;
     InputField message;
+    Image itemImage;
+    Image pickupDropIcon;
+    Text valueText;
+    public Sprite pickupSprite;
+    public Sprite dropSprite;
 
     void Awake () {
+        holdingItem = false;
+        heldItemType = "bush";
+        heldItemInitVal = 1;
+
+        ttWasJustActive = false;
+    }
+
+	// Use this for initialization
+    void Start () {
         tt = FindObjectOfType<TapTarget>();
+        lg = FindObjectOfType<LevelGen>();
         children = new List<GameObject>();
         for (int index = 0; index < transform.childCount; index++) {
             children.Add(transform.GetChild(index).gameObject);
         }
         message = GetComponentInChildren<InputField>();
+        
+        itemImage = transform.FindChild("ItemImage").GetComponent<Image>();
+        pickupDropIcon = itemImage.transform.FindChild("PickupDropImage")
+                .GetComponent<Image>();
+        valueText = itemImage.transform.FindChild("ItemValue")
+                .GetComponent<Text>();
 
-        holdingItem = false;
-        heldItemType = "bush";
-        heldItemInitVal = 1;
-        heldItemLevel = 0;
-    }
-
-	// Use this for initialization
-	void Start () {
-	
+        lastTTPos = tt.transform.position;
 	}
 	
 	// Update is called once per frame
@@ -43,6 +58,14 @@ public class InventoryGUI : MonoBehaviour {
         } else {
             Hide();
         }
+
+        if (tt.Active
+                && (!ttWasJustActive || lastTTPos != tt.transform.position)) {
+            UpdateItemGUI();
+        }
+
+        ttWasJustActive = tt.Active;
+        lastTTPos = tt.transform.position;
 	}
 
     public void Show () {
@@ -73,10 +96,41 @@ public class InventoryGUI : MonoBehaviour {
             return;
         }
         Vector3 signPos = tt.transform.position;
-        if (FarFromOtherSigns(signPos)) {
+        if (FarFromOtherSigns(signPos) && message.text.Trim().Length > 0) {
             FindObjectOfType<LevelGen>().AddSign(signPos, Login.User.Username,
                                                  message.text);
+            message.text = "";
         }
+    }
+
+    void UpdateItemGUI ()
+    {
+        if (holdingItem) {
+            itemImage.sprite = Resources.Load<Sprite> ("Sprites/" + heldItemType);
+            valueText.text = heldItemInitVal.ToString ();
+            itemImage.color = Color.white;
+        }
+        else {
+            valueText.text = "";
+            itemImage.color = Color.clear;
+        }
+        Item closest = FindClosestItem ();
+        if (CanPlaceItemHere (closest, tt.transform.position)) {
+            pickupDropIcon.sprite = dropSprite;
+            pickupDropIcon.color = Color.white;
+        }
+        else
+            if (CanPickupItemHere (closest, tt.transform.position)) {
+                pickupDropIcon.sprite = pickupSprite;
+                pickupDropIcon.color = Color.white;
+                itemImage.sprite = Resources.Load<Sprite> ("Sprites/" + closest.itemName);
+                valueText.text = closest.initValue.ToString ();
+                itemImage.color = Color.white;
+            }
+            else {
+                Debug.Log (pickupDropIcon);
+                pickupDropIcon.color = Color.clear;
+            }
     }
 
     public void PickupDropItem () {
@@ -85,14 +139,18 @@ public class InventoryGUI : MonoBehaviour {
         }
 
         Item closest = FindClosestItem();
-        if (holdingItem) {
-            if (closest == null
-                    || (tt.transform.position - closest.transform.position)
-                    .sqrMagnitude > MIN_ITEM_SPACING_SQR) {
-                // TODO @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-            }
-        } else {
-
+        if (CanPlaceItemHere(closest, tt.transform.position)) {
+            lg.AddItem(tt.transform.position, heldItemType,
+                       heldItemInitVal);
+            holdingItem = false;
+            UpdateItemGUI();    
+        } else if (CanPickupItemHere(closest, tt.transform.position)) {
+            lg.UpdateItem(closest.transform.position, closest.itemName,
+                          closest.initValue, closest.level + 1);
+            holdingItem = true;
+            heldItemType = closest.itemName;
+            heldItemInitVal = closest.initValue;
+            UpdateItemGUI();
         }
     }
 
@@ -102,12 +160,28 @@ public class InventoryGUI : MonoBehaviour {
         float minSqrDist = MIN_ITEM_SPACING_SQR + 1f;
         foreach (Item item in items) {
             float sqrMag = (item.transform.position
-                            - transform.position).sqrMagnitude;
+                            - tt.transform.position).sqrMagnitude;
             if (sqrMag <= MIN_ITEM_SPACING_SQR && sqrMag < minSqrDist) {
                 result = item;
                 minSqrDist = sqrMag;
             }
         }
         return result;
+    }
+
+    bool CanPickupItemHere (Item closestItem, Vector3 selectPos) {
+        return !holdingItem
+                && lg.World.GetString("owner") != Login.User.Username
+                && closestItem != null
+                && (selectPos - closestItem.transform.position)
+                .sqrMagnitude <= MIN_ITEM_SPACING_SQR;
+    }
+
+    bool CanPlaceItemHere (Item closestOtherItem, Vector3 selectPos) {
+        return holdingItem
+                && lg.World.GetString("owner") == Login.User.Username
+                && (closestOtherItem == null
+                || (selectPos - closestOtherItem.transform.position)
+                .sqrMagnitude > MIN_ITEM_SPACING_SQR);
     }
 }

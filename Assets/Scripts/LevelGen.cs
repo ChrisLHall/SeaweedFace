@@ -8,6 +8,7 @@ using System.Linq;
 
 public class LevelGen : MonoBehaviour {
     Player player;
+    TapTarget targ;
 
     GameObject islandPrefab;
     GameObject signPrefab;
@@ -19,11 +20,15 @@ public class LevelGen : MonoBehaviour {
     const float MAX_HEIGHT = 8f;
     const int NUM_ISLANDS = 4;
 
+    const float EPSILON = 0.0001f;
+
     readonly string[] ITEMS = new string[] {
-        "bush"
+        "bush",
+        "rocks"
     };
     readonly int[] ITEM_VALS = new int[] {
-        1
+        1,
+        3
     };
 
     List<GameObject> spawnedObjects;
@@ -33,6 +38,7 @@ public class LevelGen : MonoBehaviour {
 
     void Awake () {
         player = FindObjectOfType<Player>();
+        targ = FindObjectOfType<TapTarget>();
 
         spawnedObjects = new List<GameObject>();
         islandPrefab = Resources.Load<GameObject>("Prefabs/Island");
@@ -135,11 +141,55 @@ public class LevelGen : MonoBehaviour {
         AddObjectRefreshSave(newSign);
     }
 
-    void AddObjectRefreshSave (JsonObject newObj) {
+    public void AddItem (Vector3 pos, string type, int initVal) {
+        JsonObject newItem = CreateItem(pos, type, initVal, 0);
+        AddObjectRefreshSave(newItem);
+    }
+
+    public void UpdateItem (Vector3 pos, string type, int initVal,
+                            int newLevel) {
+        JsonObject newItem = CreateItem(pos, type, initVal, newLevel);
+        AddObjectRefreshSave(newItem, true);
+    }
+
+    public void RefreshWorld () {
+        World.Refresh();
+        ClearSpawnedObjects();
+        PopulateWorld(World.GetJsonArray("objects"));
+        World.Save();
+        RecalcPlayerPrestige();
+    }
+
+    void AddObjectRefreshSave (JsonObject newObj, bool tryReplace = false) {
         World.Refresh();
         JsonArray ja = World.GetJsonArray("objects");
-        ja.Put(newObj);
-        World["objects"] = ja;
+        JsonArray newJA = new JsonArray();
+        if (tryReplace) {
+            Vector3 currentPos = new Vector3((float) newObj.GetDouble("x"),
+                                             (float) newObj.GetDouble("y"),
+                                             (float) newObj.GetDouble("z"));
+            for (int i = 0; i < ja.Length(); i++) {
+                JsonObject o = ja.GetJsonObject(i);
+                if (o.GetString("type") != "item"
+                        && o.GetString("type") != "sign") {
+                    newJA.Put(o);
+                    continue;
+                }
+                Vector3 pos = new Vector3((float) o.GetDouble("x"),
+                                          (float) o.GetDouble("y"),
+                                          (float) o.GetDouble("z"));
+                if ((pos - currentPos).sqrMagnitude < EPSILON
+                        && newObj.GetString("type") == o.GetString("type")) {
+                    // Skip if position and type are equal
+                    continue;
+                }
+                newJA.Put(o);
+            }
+        } else {
+            newJA = ja;
+        }
+        newJA.Put(newObj);
+        World["objects"] = newJA;
         ClearSpawnedObjects();
         PopulateWorld(World.GetJsonArray("objects"));
         World.Save();
@@ -291,11 +341,13 @@ public class LevelGen : MonoBehaviour {
             ClearSpawnedObjects();
             World = GenerateNewLevel();
             player.FindStartPos();
+            targ.Deselect();
         } else if (!goHome && result.Count < 5) {
             Debug.Log("Traveling to new anonymous world.");
             ClearSpawnedObjects();
             World = GenerateNewLevel(true);
             player.FindStartPos();
+            targ.Deselect();
         } else {
             ClearSpawnedObjects();
             int i = Mathf.FloorToInt(Random.value * result.Count);
@@ -304,6 +356,7 @@ public class LevelGen : MonoBehaviour {
             Debug.Log("Successfully travelled " + (goHome ? "home." : "away."));
             PopulateWorld(latest.GetJsonArray("objects"));
             player.FindStartPos();
+            targ.Deselect();
         }
     }
 
