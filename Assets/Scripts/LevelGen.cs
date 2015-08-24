@@ -28,11 +28,25 @@ public class LevelGen : MonoBehaviour {
 
     readonly string[] ITEMS = new string[] {
         "bush",
-        "rocks"
+        "rocks",
+        "wheat",
+        "tree",
+        "pig",
+        "oil",
+        "tentacles",
+        "pylon",
+        "cactus"
     };
     readonly int[] ITEM_VALS = new int[] {
         1,
-        3
+        5,
+        3,
+        7,
+        10,
+        15,
+        20,
+        30,
+        8
     };
 
     List<GameObject> spawnedObjects;
@@ -73,6 +87,7 @@ public class LevelGen : MonoBehaviour {
             PopulateWorld(latest.GetJsonArray("objects"));
             Village.RecalculateAll();
         }
+        FindObjectOfType<AlienMgr>().ClearAliens();
 	}
 	
 	// Update is called once per frame
@@ -82,7 +97,7 @@ public class LevelGen : MonoBehaviour {
 
     KiiObject GenerateNewLevel (bool createFakeUser = false) {
         KiiObject level = Kii.Bucket("worlds").NewKiiObject();
-        System.DateTime expiration = System.DateTime.UtcNow.AddMinutes(20);
+        System.DateTime expiration = FindNext20MinAlign(System.DateTime.UtcNow);
         JsonArray objects = new JsonArray();
         for (int i = 0; i < NumIslandsSpawned(Prestige); i++) {
             JsonObject island = LevelGen.GenerateIsland();
@@ -120,6 +135,14 @@ public class LevelGen : MonoBehaviour {
         level["worldPrestige"] = CountWorldPrestige();
         level.Save(false, SaveWorldCallback);
         return level;
+    }
+
+    System.DateTime FindNext20MinAlign (System.DateTime after) {
+        System.DateTime result = after.AddMilliseconds(-after.Millisecond);
+        result = result.AddSeconds(-result.Second);
+        result = result.AddMinutes(-(result.Minute % 20));
+        result = result.AddMinutes(20);
+        return result;
     }
 
     void SaveWorldCallback (KiiObject worldObj, System.Exception e) {
@@ -405,6 +428,7 @@ public class LevelGen : MonoBehaviour {
             Village.RecalculateAll();
         }
         player.FindStartPos();
+        FindObjectOfType<AlienMgr>().ClearAliens();
     }
 
     void RecalcPlayerPrestige () {

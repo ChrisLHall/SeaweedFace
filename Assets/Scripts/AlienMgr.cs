@@ -41,8 +41,9 @@ public class AlienMgr : MonoBehaviour {
                 FindObjectOfType<LevelGen>().World.GetLong("expires"));
         float minutesLeft = (float) (expires - System.DateTime.UtcNow)
                 .TotalMinutes;
-        return Mathf.Max(0, Mathf.CeilToInt(
-                (1f - minutesLeft / minutesLeftToSpawn) * maxSpawns));
+        return Mathf.Clamp(Mathf.CeilToInt(
+                (1f - minutesLeft / minutesLeftToSpawn) * maxSpawns), 0,
+                maxSpawns);
     }
     
     public Alien FindClosest (Vector3 pos) {

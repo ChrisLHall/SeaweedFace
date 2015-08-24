@@ -11,7 +11,7 @@ public class Item : MonoBehaviour {
 
     public int TotalPoints {
         get {
-            return initValue * (1 + level);
+            return initValue + level;
         }
     }
 
