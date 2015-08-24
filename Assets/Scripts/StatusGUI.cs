@@ -15,6 +15,6 @@ public class StatusGUI : MonoBehaviour {
                 = new System.DateTime(lg.World.GetLong("expires"));
         System.TimeSpan ts = System.DateTime.UtcNow - exp;
         text.text = "Prestige: " + lg.Prestige + "\n"
-                + "Time left: " + ts.ToString().Substring(0, 11);
+                + "World ends: " + ts.ToString().Substring(0, 11);
     }
 }

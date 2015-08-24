@@ -9,6 +9,12 @@ public class Item : MonoBehaviour {
 
     const float SCALE_INCREMENT = 0.2f;
 
+    public int TotalPoints {
+        get {
+            return initValue * (1 + level);
+        }
+    }
+
 	// Use this for initialization
 	void Start () {
         sr = GetComponentInChildren<SpriteRenderer>();

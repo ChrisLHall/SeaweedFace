@@ -749,6 +749,64 @@ Prefab:
     - {fileID: 11473198, guid: 32a5bc899796bd04dab93436d0ff15ad, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: 32a5bc899796bd04dab93436d0ff15ad, type: 2}
   m_IsPrefabParent: 0
+--- !u!1001 &1445549866
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 489782, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 489782, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 15.8000011
+      objectReference: {fileID: 0}
+    - target: {fileID: 489782, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 489782, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 489782, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 489782, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 489782, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 489782, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_RootOrder
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 185378, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_Name
+      value: ParticleContainer
+      objectReference: {fileID: 0}
+    - target: {fileID: 19817062, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: ShapeModule.radius
+      value: .300000012
+      objectReference: {fileID: 0}
+    - target: {fileID: 19817062, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: EmissionModule.rate.scalar
+      value: .699999988
+      objectReference: {fileID: 0}
+    - target: {fileID: 437060, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 0409cf199819a1e43a2b5c31b54ca25e, type: 2}
+  m_IsPrefabParent: 0
 --- !u!1001 &1478161623
 Prefab:
   m_ObjectHideFlags: 0

@@ -128,7 +128,6 @@ public class InventoryGUI : MonoBehaviour {
                 itemImage.color = Color.white;
             }
             else {
-                Debug.Log (pickupDropIcon);
                 pickupDropIcon.color = Color.clear;
             }
     }

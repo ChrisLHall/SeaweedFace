@@ -13,11 +13,12 @@ public class LevelGen : MonoBehaviour {
     GameObject islandPrefab;
     GameObject signPrefab;
     GameObject itemPrefab;
+    GameObject villagePrefab;
     const float MAX_XZ_OFFSET = 8f;
     const float MIN_SIZE = 4f;
     const float MAX_SIZE = 12f;
-    const float MIN_HEIGHT = 2f;
-    const float MAX_HEIGHT = 8f;
+    const float MIN_HEIGHT = 3f;
+    const float MAX_HEIGHT = 10f;
     const int NUM_ISLANDS = 4;
 
     const float EPSILON = 0.0001f;
@@ -44,6 +45,7 @@ public class LevelGen : MonoBehaviour {
         islandPrefab = Resources.Load<GameObject>("Prefabs/Island");
         signPrefab = Resources.Load<GameObject>("Prefabs/Sign");
         itemPrefab = Resources.Load<GameObject>("Prefabs/Item");
+        villagePrefab = Resources.Load<GameObject>("Prefabs/Village");
         Prestige = 1;
     }
 
@@ -66,6 +68,7 @@ public class LevelGen : MonoBehaviour {
             World = latest;
             Debug.Log("Successfully loaded world.");
             PopulateWorld(latest.GetJsonArray("objects"));
+            Village.RecalculateAll();
         }
 	}
 	
@@ -83,6 +86,14 @@ public class LevelGen : MonoBehaviour {
             PlaceIsland(island);
             objects.Put(island);
         }
+        
+        int prestigeLeft = createFakeUser ? 5 : Prestige;
+        int numVillages = NumVillagesSpawned(prestigeLeft);
+        for (int i = 0; i < numVillages; i++) {
+            JsonObject village = RandomGenVillage();
+            PlaceVillage(village);
+            objects.Put(village);
+        }
         string username = createFakeUser
                 ? ("NOBODY" + Mathf.FloorToInt(1000f * Random.value).ToString())
                 : Login.User.Username;
@@ -92,7 +103,6 @@ public class LevelGen : MonoBehaviour {
                                           + " Island!");
         PlaceSign(helloSign);
         objects.Put(helloSign);
-        int prestigeLeft = createFakeUser ? 5 : Prestige;
         while (prestigeLeft > 0) {
             JsonObject item = RandomGenItem(prestigeLeft);
             prestigeLeft -= item.GetInt("initValue");
@@ -103,13 +113,15 @@ public class LevelGen : MonoBehaviour {
         level["owner"] = username;
         level["expires"] = expiration.Ticks;
         level["objects"] = objects;
+        Village.RecalculateAll();
+        level["worldPrestige"] = CountWorldPrestige();
         level.Save(false, SaveWorldCallback);
         return level;
     }
 
     void SaveWorldCallback (KiiObject worldObj, System.Exception e) {
         if (e != null && e as System.NullReferenceException == null) {
-            Debug.LogError("Could not save world: " + e.Message);
+            Debug.LogError("Could not save the world: " + e.Message);
             return;
         }
     }
@@ -123,6 +135,8 @@ public class LevelGen : MonoBehaviour {
                 PlaceSign(obj);
             } else if (obj.GetString("type") == "item") {
                 PlaceItem(obj);
+            } else if (obj.GetString("type") == "village") {
+                PlaceVillage(obj);
             }
         }
     }
@@ -146,6 +160,11 @@ public class LevelGen : MonoBehaviour {
         AddObjectRefreshSave(newItem);
     }
 
+    public void AddVillage (Vector3 pos) {
+        JsonObject newVillage = CreateVillage(pos);
+        AddObjectRefreshSave(newVillage);
+    }
+
     public void UpdateItem (Vector3 pos, string type, int initVal,
                             int newLevel) {
         JsonObject newItem = CreateItem(pos, type, initVal, newLevel);
@@ -156,7 +175,7 @@ public class LevelGen : MonoBehaviour {
         World.Refresh();
         ClearSpawnedObjects();
         PopulateWorld(World.GetJsonArray("objects"));
-        World.Save();
+        Village.RecalculateAll();
         RecalcPlayerPrestige();
     }
 
@@ -192,6 +211,9 @@ public class LevelGen : MonoBehaviour {
         World["objects"] = newJA;
         ClearSpawnedObjects();
         PopulateWorld(World.GetJsonArray("objects"));
+
+        Village.RecalculateAll();
+        World["worldPrestige"] = CountWorldPrestige();
         World.Save();
         RecalcPlayerPrestige();
     }
@@ -236,6 +258,15 @@ public class LevelGen : MonoBehaviour {
         return obj;
     }
 
+    static JsonObject CreateVillage(Vector3 position) {
+        JsonObject obj = new JsonObject();
+        obj.Put("type", "village");
+        obj.Put("x", position.x);
+        obj.Put("y", position.y);
+        obj.Put("z", position.z);
+        return obj;
+    }
+
     JsonObject RandomGenItem(int maxVal) {
         if (maxVal <= 0) {
             Debug.LogError("Tried to generate an item of value 0");
@@ -250,6 +281,11 @@ public class LevelGen : MonoBehaviour {
         }
         Vector3 position = FindSuitableSpawn();
         return CreateItem(position, ITEMS[index], ITEM_VALS[index], 0);
+    }
+
+    JsonObject RandomGenVillage() {
+        Vector3 position = FindSuitableSpawn();
+        return CreateVillage(position);
     }
 
     void PlaceIsland (JsonObject islandJson) {
@@ -296,6 +332,16 @@ public class LevelGen : MonoBehaviour {
         spawnedObjects.Add(item);
     }
 
+    void PlaceVillage (JsonObject villageJson) {
+        float x = (float) villageJson.GetDouble("x");
+        float y = (float) villageJson.GetDouble("y");
+        float z = (float) villageJson.GetDouble("z");
+        
+        GameObject village = Instantiate<GameObject>(villagePrefab);
+        village.transform.position = new Vector3(x, y, z);
+        spawnedObjects.Add(village);
+    }
+
     public Vector3 FindSuitableSpawn () {
         Vector3 tempSpawn = Vector3.zero;
         for (int iter = 0; iter < 1000; iter++) {
@@ -336,18 +382,16 @@ public class LevelGen : MonoBehaviour {
 
         KiiQueryResult<KiiObject> result
             = Kii.Bucket("worlds").Query(worldsQuery);
+
+        targ.Deselect();
         if (goHome && result.Count == 0) {
             Debug.LogError("Could not find home! Making a new one.");
             ClearSpawnedObjects();
             World = GenerateNewLevel();
-            player.FindStartPos();
-            targ.Deselect();
         } else if (!goHome && result.Count < 5) {
             Debug.Log("Traveling to new anonymous world.");
             ClearSpawnedObjects();
             World = GenerateNewLevel(true);
-            player.FindStartPos();
-            targ.Deselect();
         } else {
             ClearSpawnedObjects();
             int i = Mathf.FloorToInt(Random.value * result.Count);
@@ -355,13 +399,29 @@ public class LevelGen : MonoBehaviour {
             World = latest;
             Debug.Log("Successfully travelled " + (goHome ? "home." : "away."));
             PopulateWorld(latest.GetJsonArray("objects"));
-            player.FindStartPos();
-            targ.Deselect();
+            Village.RecalculateAll();
         }
+        player.FindStartPos();
     }
 
     void RecalcPlayerPrestige () {
         // TODO
         Prestige = 3;
+    }
+
+    /** Please only call this after Village.RecalculateAll(). */
+    int CountWorldPrestige () {
+        Village[] villages = FindObjectsOfType<Village>();
+        int result = 0;
+        foreach (Village v in villages) {
+            if (v.CanDefend) {
+                result++;
+            }
+        }
+        return result;
+    }
+
+    static int NumVillagesSpawned (int prestige) {
+        return 3 + Mathf.FloorToInt(prestige / 10f);
     }
 }
