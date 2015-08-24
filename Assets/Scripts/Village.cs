@@ -10,7 +10,7 @@ public class Village : MonoBehaviour {
         }
     }
     const int POINTS_FOR_HUT = 10;
-    const int POINTS_FOR_CASTLE = 30;
+    const int POINTS_FOR_CASTLE = 20;
     const float GROWTH_INCREMENT = 0.01f;
 
     public Sprite tent;

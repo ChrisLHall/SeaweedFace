@@ -19,7 +19,8 @@ public class LevelGen : MonoBehaviour {
     const float MAX_SIZE = 12f;
     const float MIN_HEIGHT = 3f;
     const float MAX_HEIGHT = 10f;
-    const int NUM_ISLANDS = 4;
+
+    const int BASE_PRESTIGE = 3;
 
     const float EPSILON = 0.0001f;
 
@@ -46,7 +47,7 @@ public class LevelGen : MonoBehaviour {
         signPrefab = Resources.Load<GameObject>("Prefabs/Sign");
         itemPrefab = Resources.Load<GameObject>("Prefabs/Item");
         villagePrefab = Resources.Load<GameObject>("Prefabs/Village");
-        Prestige = 1;
+        Prestige = BASE_PRESTIGE;
     }
 
 	// Use this for initialization
@@ -81,7 +82,7 @@ public class LevelGen : MonoBehaviour {
         KiiObject level = Kii.Bucket("worlds").NewKiiObject();
         System.DateTime expiration = System.DateTime.UtcNow.AddMinutes(20);
         JsonArray objects = new JsonArray();
-        for (int i = 0; i < NUM_ISLANDS; i++) {
+        for (int i = 0; i < NumIslandsSpawned(Prestige); i++) {
             JsonObject island = LevelGen.GenerateIsland();
             PlaceIsland(island);
             objects.Put(island);
@@ -405,8 +406,23 @@ public class LevelGen : MonoBehaviour {
     }
 
     void RecalcPlayerPrestige () {
-        // TODO
-        Prestige = 3;
+        Prestige = BASE_PRESTIGE;
+
+        System.DateTime queryStart = System.DateTime.UtcNow.AddDays(-1);
+        KiiClause recentClause = KiiClause.GreaterThan("expires",
+                                                       queryStart.Ticks);
+        KiiClause mineClause = KiiClause.Equals("owner",
+                                                Login.User.Username);
+        KiiQuery worldsQuery = new KiiQuery(KiiClause.And(recentClause,
+                                                 mineClause));
+
+        KiiQueryResult<KiiObject> result
+                = Kii.Bucket("worlds").Query(worldsQuery);
+        foreach (KiiObject k in result) {
+            if (k.Has("worldPrestige")) {
+                Prestige += k.GetInt("worldPrestige");
+            }
+        }
     }
 
     /** Please only call this after Village.RecalculateAll(). */
@@ -423,5 +439,9 @@ public class LevelGen : MonoBehaviour {
 
     static int NumVillagesSpawned (int prestige) {
         return 3 + Mathf.FloorToInt(prestige / 10f);
+    }
+
+    static int NumIslandsSpawned (int prestige) {
+        return 4 + Mathf.FloorToInt(Mathf.Min(prestige / 20f, 3));
     }
 }
