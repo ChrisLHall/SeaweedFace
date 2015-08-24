@@ -8,6 +8,12 @@ public class InventoryGUI : MonoBehaviour {
     List<GameObject> children;
 
     const float MIN_SIGN_SPACING_SQR = 4f;
+    const float MIN_ITEM_SPACING_SQR = 2f;
+
+    bool holdingItem;
+    string heldItemType;
+    int heldItemInitVal;
+    int heldItemLevel;
 
     InputField message;
 
@@ -18,6 +24,11 @@ public class InventoryGUI : MonoBehaviour {
             children.Add(transform.GetChild(index).gameObject);
         }
         message = GetComponentInChildren<InputField>();
+
+        holdingItem = false;
+        heldItemType = "bush";
+        heldItemInitVal = 1;
+        heldItemLevel = 0;
     }
 
 	// Use this for initialization
@@ -66,5 +77,37 @@ public class InventoryGUI : MonoBehaviour {
             FindObjectOfType<LevelGen>().AddSign(signPos, Login.User.Username,
                                                  message.text);
         }
+    }
+
+    public void PickupDropItem () {
+        if (!tt.Active) {
+            return;
+        }
+
+        Item closest = FindClosestItem();
+        if (holdingItem) {
+            if (closest == null
+                    || (tt.transform.position - closest.transform.position)
+                    .sqrMagnitude > MIN_ITEM_SPACING_SQR) {
+                // TODO @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            }
+        } else {
+
+        }
+    }
+
+    Item FindClosestItem () {
+        Item[] items = FindObjectsOfType<Item>();
+        Item result = null;
+        float minSqrDist = MIN_ITEM_SPACING_SQR + 1f;
+        foreach (Item item in items) {
+            float sqrMag = (item.transform.position
+                            - transform.position).sqrMagnitude;
+            if (sqrMag <= MIN_ITEM_SPACING_SQR && sqrMag < minSqrDist) {
+                result = item;
+                minSqrDist = sqrMag;
+            }
+        }
+        return result;
     }
 }

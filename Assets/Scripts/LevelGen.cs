@@ -7,8 +7,11 @@ using KiiCorp.Cloud.Storage;
 using System.Linq;
 
 public class LevelGen : MonoBehaviour {
+    Player player;
+
     GameObject islandPrefab;
     GameObject signPrefab;
+    GameObject itemPrefab;
     const float MAX_XZ_OFFSET = 8f;
     const float MIN_SIZE = 4f;
     const float MAX_SIZE = 12f;
@@ -16,18 +19,31 @@ public class LevelGen : MonoBehaviour {
     const float MAX_HEIGHT = 8f;
     const int NUM_ISLANDS = 4;
 
+    readonly string[] ITEMS = new string[] {
+        "bush"
+    };
+    readonly int[] ITEM_VALS = new int[] {
+        1
+    };
+
     List<GameObject> spawnedObjects;
 
     public KiiObject World { get; private set; }
+    public int Prestige { get; private set; }
 
     void Awake () {
+        player = FindObjectOfType<Player>();
+
         spawnedObjects = new List<GameObject>();
         islandPrefab = Resources.Load<GameObject>("Prefabs/Island");
         signPrefab = Resources.Load<GameObject>("Prefabs/Sign");
+        itemPrefab = Resources.Load<GameObject>("Prefabs/Item");
+        Prestige = 1;
     }
 
 	// Use this for initialization
     void Start () {
+        RecalcPlayerPrestige();
         System.DateTime queryStart = System.DateTime.UtcNow;
         KiiClause recentClause = KiiClause.GreaterThan("expires",
                                                        queryStart.Ticks);
@@ -52,17 +68,33 @@ public class LevelGen : MonoBehaviour {
 	
 	}
 
-    KiiObject GenerateNewLevel () {
+    KiiObject GenerateNewLevel (bool createFakeUser = false) {
         KiiObject level = Kii.Bucket("worlds").NewKiiObject();
-        System.DateTime expiration = System.DateTime.UtcNow.AddHours(0.5);
+        System.DateTime expiration = System.DateTime.UtcNow.AddMinutes(20);
         JsonArray objects = new JsonArray();
         for (int i = 0; i < NUM_ISLANDS; i++) {
             JsonObject island = LevelGen.GenerateIsland();
             PlaceIsland(island);
             objects.Put(island);
         }
+        string username = createFakeUser
+                ? ("NOBODY" + Mathf.FloorToInt(1000f * Random.value).ToString())
+                : Login.User.Username;
+        JsonObject helloSign = CreateSign(FindSuitableSpawn(),
+                                          username,
+                                          "Welcome to " + username
+                                          + " Island!");
+        PlaceSign(helloSign);
+        objects.Put(helloSign);
+        int prestigeLeft = createFakeUser ? 5 : Prestige;
+        while (prestigeLeft > 0) {
+            JsonObject item = RandomGenItem(prestigeLeft);
+            prestigeLeft -= item.GetInt("initValue");
+            PlaceItem(item);
+            objects.Put(item);
+        }
 
-        level["owner"] = Login.User.Username;
+        level["owner"] = username;
         level["expires"] = expiration.Ticks;
         level["objects"] = objects;
         level.Save(false, SaveWorldCallback);
@@ -83,6 +115,8 @@ public class LevelGen : MonoBehaviour {
                 PlaceIsland(obj);
             } else if (obj.GetString("type") == "sign") {
                 PlaceSign(obj);
+            } else if (obj.GetString("type") == "item") {
+                PlaceItem(obj);
             }
         }
     }
@@ -91,6 +125,7 @@ public class LevelGen : MonoBehaviour {
         while (spawnedObjects.Count > 0) {
             GameObject obj = spawnedObjects[0];
             spawnedObjects.RemoveAt(0);
+            obj.SetActive(false);
             Destroy(obj);
         }
     }
@@ -108,6 +143,7 @@ public class LevelGen : MonoBehaviour {
         ClearSpawnedObjects();
         PopulateWorld(World.GetJsonArray("objects"));
         World.Save();
+        RecalcPlayerPrestige();
     }
 
     static JsonObject GenerateIsland () {
@@ -137,6 +173,35 @@ public class LevelGen : MonoBehaviour {
         return obj;
     }
 
+    static JsonObject CreateItem(Vector3 position, string itemType,
+                                 int initValue, int level) {
+        JsonObject obj = new JsonObject();
+        obj.Put("type", "item");
+        obj.Put("itemType", itemType);
+        obj.Put("x", position.x);
+        obj.Put("y", position.y);
+        obj.Put("z", position.z);
+        obj.Put("initValue", initValue);
+        obj.Put("level", level);
+        return obj;
+    }
+
+    JsonObject RandomGenItem(int maxVal) {
+        if (maxVal <= 0) {
+            Debug.LogError("Tried to generate an item of value 0");
+            return null;
+        }
+        int index;
+        while (true) {
+            index = Mathf.FloorToInt(Random.value * ITEMS.Length);
+            if (ITEM_VALS[index] <= maxVal) {
+                break;
+            }
+        }
+        Vector3 position = FindSuitableSpawn();
+        return CreateItem(position, ITEMS[index], ITEM_VALS[index], 0);
+    }
+
     void PlaceIsland (JsonObject islandJson) {
         float size = (float) islandJson.GetDouble("size");
         float height = (float) islandJson.GetDouble("height");
@@ -164,16 +229,36 @@ public class LevelGen : MonoBehaviour {
         spawnedObjects.Add(sign);
     }
 
+    void PlaceItem (JsonObject itemJson) {
+        string type = itemJson.GetString("itemType");
+        float x = (float) itemJson.GetDouble("x");
+        float y = (float) itemJson.GetDouble("y");
+        float z = (float) itemJson.GetDouble("z");
+        int initValue = itemJson.GetInt("initValue");
+        int level = itemJson.GetInt("level");
+        
+        GameObject item = Instantiate<GameObject>(itemPrefab);
+        item.transform.position = new Vector3(x, y, z);
+        Item itemComp = item.GetComponent<Item>();
+        itemComp.itemName = type;
+        itemComp.initValue = initValue;
+        itemComp.level = level;
+        spawnedObjects.Add(item);
+    }
+
     public Vector3 FindSuitableSpawn () {
         Vector3 tempSpawn = Vector3.zero;
-        for (int iter = 0; iter < 100; iter++) {
+        for (int iter = 0; iter < 1000; iter++) {
             float maxCoord = MAX_XZ_OFFSET + MAX_SIZE / 2f;
             float xPos = -maxCoord + 2f * maxCoord * Random.value;
             float zPos = -maxCoord + 2f * maxCoord * Random.value;
             Vector3 rayStart = new Vector3(xPos, MAX_HEIGHT + 1f, zPos);
             RaycastHit hit;
             Physics.Raycast(new Ray(rayStart, Vector3.down), out hit);
-            if (hit.collider.gameObject.name == "Island(Clone)") {
+            // When a GameObject is destroyed, it's == operator is overloaded
+            // to compare true to null
+            if (hit.collider.gameObject.name == "Island(Clone)"
+                    && hit.collider.gameObject.activeInHierarchy) {
                 tempSpawn = hit.point;
                 break;
             }
@@ -182,7 +267,7 @@ public class LevelGen : MonoBehaviour {
     }
 
     public void Travel (bool goHome) {
-        Debug.LogError("WOT");
+        RecalcPlayerPrestige();
         System.DateTime queryStart = System.DateTime.UtcNow;
         KiiClause recentClause = KiiClause.GreaterThan("expires",
                                                        queryStart.Ticks);
@@ -201,19 +286,29 @@ public class LevelGen : MonoBehaviour {
 
         KiiQueryResult<KiiObject> result
             = Kii.Bucket("worlds").Query(worldsQuery);
-        if (result.Count == 0) {
-            if (!goHome) {
-                Debug.Log("No other places! Going back home.");
-                Travel(true);
-            } else {
-                Debug.LogError("Could not find home!");
-            }
+        if (goHome && result.Count == 0) {
+            Debug.LogError("Could not find home! Making a new one.");
+            ClearSpawnedObjects();
+            World = GenerateNewLevel();
+            player.FindStartPos();
+        } else if (!goHome && result.Count < 5) {
+            Debug.Log("Traveling to new anonymous world.");
+            ClearSpawnedObjects();
+            World = GenerateNewLevel(true);
+            player.FindStartPos();
         } else {
             ClearSpawnedObjects();
-            KiiObject latest = result[0];
+            int i = Mathf.FloorToInt(Random.value * result.Count);
+            KiiObject latest = result[i];
             World = latest;
             Debug.Log("Successfully travelled " + (goHome ? "home." : "away."));
             PopulateWorld(latest.GetJsonArray("objects"));
+            player.FindStartPos();
         }
+    }
+
+    void RecalcPlayerPrestige () {
+        // TODO
+        Prestige = 3;
     }
 }

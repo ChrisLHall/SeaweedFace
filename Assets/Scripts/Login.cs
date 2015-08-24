@@ -30,7 +30,12 @@ public class Login : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-	
+        if (PlayerPrefs.HasKey("username")) {
+            username.text = PlayerPrefs.GetString("username");
+        }
+        if (PlayerPrefs.HasKey("password")) {
+            password.text = PlayerPrefs.GetString("password");
+        }
 	}
 	
 	// Update is called once per frame
@@ -38,6 +43,8 @@ public class Login : MonoBehaviour {
         error.text = setErrText;
 
         if (loggedIn && User != null) {
+            PlayerPrefs.SetString("username", username.text);
+            PlayerPrefs.SetString("password", password.text);
             Application.LoadLevel("myIsland");
         }
 	}
