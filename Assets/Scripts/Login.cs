@@ -50,10 +50,10 @@ public class Login : MonoBehaviour {
 	}
 
     bool ValidateLogin () {
-        if (username.text.Length < 5) {
+        if (username.text.Trim().Length < 5) {
             error.text = "Username must be 5+ characters!";
             return false;
-        } else if (password.text.Length < 8) {
+        } else if (password.text.Trim().Length < 8) {
             error.text = "Password must be 8+ characters!";
             return false;
         }
@@ -64,10 +64,10 @@ public class Login : MonoBehaviour {
         if (!ValidateLogin()) {
             return;
         }
-        KiiUser.Builder builder = KiiUser.BuilderWithEmail(email.text);
-        builder.WithName(username.text);
+        KiiUser.Builder builder = KiiUser.BuilderWithEmail(email.text.Trim());
+        builder.WithName(username.text.Trim());
         KiiUser user = builder.Build();
-        user.Register(password.text, UserCreatedCallback);
+        user.Register(password.text.Trim(), UserCreatedCallback);
     }
 
     void UserCreatedCallback (KiiUser callbackUser, System.Exception exc) {
@@ -99,7 +99,7 @@ public class Login : MonoBehaviour {
         if (!ValidateLogin()) {
             return;
         }
-        KiiUser.LogIn(username.text, password.text, LoginCallback);
+        KiiUser.LogIn(username.text.Trim(), password.text.Trim(), LoginCallback);
     }
 
     void LoginCallback (KiiUser callbackUser, System.Exception exc) {
