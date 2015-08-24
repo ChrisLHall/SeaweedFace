@@ -10,8 +10,8 @@ public class Village : MonoBehaviour {
         }
     }
     const int POINTS_FOR_HUT = 10;
-    const int POINTS_FOR_CASTLE = 20;
-    const float GROWTH_INCREMENT = 0.01f;
+    const int POINTS_FOR_CASTLE = 30;
+    const float GROWTH_INCREMENT = 0.03f;
 
     public Sprite tent;
     public Sprite hut;
@@ -23,6 +23,13 @@ public class Village : MonoBehaviour {
     GameObject villagersPrefab;
     List<GameObject> createdVillagers;
 
+    GameObject laser;
+    float stopLaserTime;
+    float nextShotTime;
+    bool startedShot;
+    const float SHOT_INTERVAL = 2f;
+    const float SHOT_LENGTH = 0.3f;
+
 	// Use this for initialization
 	void Awake () {
         TotalPoints = 0;
@@ -31,11 +38,34 @@ public class Village : MonoBehaviour {
         villagersPrefab = Resources.Load<GameObject>(
             "Prefabs/VillagerParticles");
         createdVillagers = new List<GameObject>();
+
+        laser = transform.FindChild("Laser").gameObject;
+        stopLaserTime = Time.time + SHOT_LENGTH;
+        nextShotTime = Time.time + SHOT_LENGTH + SHOT_INTERVAL;
+        startedShot = false;
 	}
 	
 	// Update is called once per frame
 	void Update () {
-	
+	    if (Time.time < stopLaserTime) {
+            if (!startedShot) {
+                startedShot = true;
+                Alien closest = FindObjectOfType<AlienMgr>()
+                        .FindClosest(transform.position);
+                if (TotalPoints >= POINTS_FOR_CASTLE && closest != null) {
+                    ShowLaser(closest.transform.position);
+                    // TODO play a sound
+                    closest.BlowUp();
+                }
+            }
+        } else if (Time.time < nextShotTime) {
+            HideLaser();
+        } else {
+            stopLaserTime = Time.time + SHOT_LENGTH;
+            nextShotTime = Time.time + SHOT_LENGTH
+                    + Random.value * SHOT_INTERVAL;
+            startedShot = false;
+        }
 	}
 
     void UpdateSprite () {
@@ -71,7 +101,7 @@ public class Village : MonoBehaviour {
         }
     }
 
-    static Village Closest (Vector3 pos, Village[] villages) {
+    public static Village Closest (Vector3 pos, Village[] villages) {
         Village closest = villages[0];
         float closestSqrDist = (closest.transform.position - pos).sqrMagnitude;
         foreach (Village v in villages) {
@@ -105,5 +135,15 @@ public class Village : MonoBehaviour {
 
     void OnDestroy () {
         DestroyAllVillagers();
+    }
+
+    void ShowLaser (Vector3 dest) {
+        laser.transform.localScale
+                = new Vector3(1f, 1f, (dest - transform.position).magnitude);
+        laser.transform.LookAt(dest);
+    }
+
+    void HideLaser () {
+        laser.transform.localScale = Vector3.one * 0.01f;
     }
 }

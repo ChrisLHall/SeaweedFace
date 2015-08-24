@@ -10,6 +10,9 @@ GameObject:
   - 4: {fileID: 472738}
   - 114: {fileID: 11469308}
   - 114: {fileID: 11404086}
+  - 114: {fileID: 11455180}
+  - 114: {fileID: 11498696}
+  - 114: {fileID: 11463108}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -40,6 +43,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d55fffb96c198c44a6a09435dc0389a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &11455180
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 183314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3ffe5a060231bb40b81f626310c12a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  appId: 3c82b108
+  appKey: 7c04df9f1777c38ee02504a808aaa8a3
+--- !u!114 &11463108
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 183314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2adfa928123536747ad96ce5334b3418, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minutesLeftToSpawn: 10
+  maxSpawns: 10
 --- !u!114 &11469308
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -49,6 +78,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0c6db3bd60d0614ca3d550cd05b824b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &11498696
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 183314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: def9933729d6f11489e9c9bb89b9dde1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &100100000

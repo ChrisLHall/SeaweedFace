@@ -24,6 +24,8 @@ public class LevelGen : MonoBehaviour {
 
     const float EPSILON = 0.0001f;
 
+    const int MIN_WORLDS = 3;
+
     readonly string[] ITEMS = new string[] {
         "bush",
         "rocks"
@@ -389,7 +391,7 @@ public class LevelGen : MonoBehaviour {
             Debug.LogError("Could not find home! Making a new one.");
             ClearSpawnedObjects();
             World = GenerateNewLevel();
-        } else if (!goHome && result.Count < 5) {
+        } else if (!goHome && result.Count < MIN_WORLDS) {
             Debug.Log("Traveling to new anonymous world.");
             ClearSpawnedObjects();
             World = GenerateNewLevel(true);
