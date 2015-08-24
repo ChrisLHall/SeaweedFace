@@ -3,7 +3,8 @@ using System.Collections;
 
 public class Player : MonoBehaviour {
     Main main;
-
+    TapTarget targeter;
+    
     Vector3 camOffset;
     float camAngle;
     const float SPIN_SPEED = 30f;
@@ -15,7 +16,7 @@ public class Player : MonoBehaviour {
     const float VERTICAL_OFFSET = 0.5f;
     const float VERTICAL_MULT = 0.7f;
     const float SIDEWAYS_MULT = 0.1f;
-    const float MAX_TAP_TIME = 0.4f;
+    const float MAX_TAP_TIME = 0.2f;
     const float MAX_LONGPRESS_TIME = 2f;
     const float MAX_VELOCITY = 0.3f;
 
@@ -24,6 +25,7 @@ public class Player : MonoBehaviour {
 
     void Awake () {
         main = FindObjectOfType<Main>();
+        targeter = FindObjectOfType<TapTarget>();
         camAngle = 0f;
         physicsCtrlVec = Vector2.zero;
     }
@@ -63,22 +65,28 @@ public class Player : MonoBehaviour {
         }
     }
 
-    void FindStartPos() {
+    public void FindStartPos() {
         LevelGen lg = FindObjectOfType<LevelGen>();
         transform.position = lg.FindSuitableSpawn() + 3f * Vector3.up;
+        camAngle = 6.28f * Random.value;
     }
 
     void ProcessControls () {
         if (main.InputMgr.JustTapped) {
-            Vector2 fromMiddle
-                    = main.InputMgr.NormalizedTapPos - Vector2.one * 0.5f;
-            float upComponent = VERTICAL_MULT
-                    * Mathf.Max(0f, VERTICAL_OFFSET
-                    + 0.5f - fromMiddle.magnitude);
-            physicsCtrlVec = Quaternion.AngleAxis(camAngle, Vector3.up)
-                    * new Vector3(fromMiddle.x * SIDEWAYS_MULT, upComponent,
-                    fromMiddle.y);
-            camAngle += fromMiddle.x * SPIN_SPEED;
+            if (main.InputMgr.TapLength <= MAX_TAP_TIME) {
+                targeter.Deselect();
+                Vector2 fromMiddle
+                        = main.InputMgr.NormalizedTapPos - Vector2.one * 0.5f;
+                float upComponent = VERTICAL_MULT
+                        * Mathf.Max(0f, VERTICAL_OFFSET
+                        + 0.5f - fromMiddle.magnitude);
+                physicsCtrlVec = Quaternion.AngleAxis(camAngle, Vector3.up)
+                        * new Vector3(fromMiddle.x * SIDEWAYS_MULT, upComponent,
+                        fromMiddle.y);
+                camAngle += fromMiddle.x * SPIN_SPEED;
+            } else if (main.InputMgr.TapLength <= MAX_LONGPRESS_TIME) {
+                targeter.TargetFromScreen(main.InputMgr.TapPos);
+            }
         }
     }
 }

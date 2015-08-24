@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using System.Linq;
 
 public class SignGUI : MonoBehaviour {
-    const float SIGN_READ_DIST_SQR = 4f;
+    const float SIGN_READ_DIST_SQR = 3f;
     Player player;
     Text text;
     void Awake () {
@@ -14,16 +14,18 @@ public class SignGUI : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         Sign[] signs = FindObjectsOfType<Sign>();
-        double closestDist = signs.Max(
-                (Sign s) => (s.transform.position - player.transform.position)
-                .sqrMagnitude);
-        if (closestDist < SIGN_READ_DIST_SQR) {
-            Sign closest = signs.First((Sign s) =>
-                    ((s.transform.position - player.transform.position)
-                    .sqrMagnitude == closestDist));
-            text.text = closest.owner + " says:\n" + closest.message;
-        } else {
-            text.text = "";
+        if (signs.Length > 0) {
+            double closestDist = signs.Min(
+                    (Sign s) => (s.transform.position - player.transform.position)
+                    .sqrMagnitude);
+            if (closestDist < SIGN_READ_DIST_SQR) {
+                Sign closest = signs.First((Sign s) =>
+                        ((s.transform.position - player.transform.position)
+                        .sqrMagnitude == closestDist));
+                text.text = closest.owner + " says: \"" + closest.message + "\"";
+            } else {
+                text.text = "";
+            }
         }
 	}
 }

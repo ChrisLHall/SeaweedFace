@@ -8,6 +8,7 @@ using System.Linq;
 
 public class LevelGen : MonoBehaviour {
     GameObject islandPrefab;
+    GameObject signPrefab;
     const float MAX_XZ_OFFSET = 8f;
     const float MIN_SIZE = 4f;
     const float MAX_SIZE = 12f;
@@ -22,30 +23,27 @@ public class LevelGen : MonoBehaviour {
     void Awake () {
         spawnedObjects = new List<GameObject>();
         islandPrefab = Resources.Load<GameObject>("Prefabs/Island");
+        signPrefab = Resources.Load<GameObject>("Prefabs/Sign");
     }
 
 	// Use this for initialization
     void Start () {
         System.DateTime queryStart = System.DateTime.UtcNow;
-        KiiQuery recentQuery = new KiiQuery(
-                KiiClause.GreaterThan("expires", queryStart.Ticks));
+        KiiClause recentClause = KiiClause.GreaterThan("expires",
+                                                       queryStart.Ticks);
+        KiiClause mineClause = KiiClause.Equals("owner", Login.User.Username);
+        KiiQuery recentQuery = new KiiQuery(KiiClause.And(recentClause,
+                                                          mineClause));
         KiiQueryResult<KiiObject> result
-                = Login.User.Bucket("worlds").Query(recentQuery);
+                = Kii.Bucket("worlds").Query(recentQuery);
         if (result.Count == 0) {
             Debug.Log("Creating new world.");
             World = GenerateNewLevel();
         } else {
-            double lastExp = result.Max(
-                    (KiiObject k) => k.GetDouble("expires"));
-            KiiObject latest = result.First(
-                    (KiiObject k) => (k.GetDouble("expires") == lastExp));
-            System.Uri worldUri = new System.Uri(latest.GetString("worldId"));
-            Debug.LogWarning(worldUri.ToString());
-            KiiObject world = KiiObject.CreateByUri(worldUri);
-            world.Refresh();
-            World = world;
+            KiiObject latest = result[0];
+            World = latest;
             Debug.Log("Successfully loaded world.");
-            PopulateWorld(world.GetJsonArray("objects"));
+            PopulateWorld(latest.GetJsonArray("objects"));
         }
 	}
 	
@@ -67,19 +65,15 @@ public class LevelGen : MonoBehaviour {
         level["owner"] = Login.User.Username;
         level["expires"] = expiration.Ticks;
         level["objects"] = objects;
-        level.Save(false, SaveWorldInUser);
+        level.Save(false, SaveWorldCallback);
         return level;
     }
 
-    void SaveWorldInUser (KiiObject worldObj, System.Exception e) {
+    void SaveWorldCallback (KiiObject worldObj, System.Exception e) {
         if (e != null && e as System.NullReferenceException == null) {
             Debug.LogError("Could not save world: " + e.Message);
             return;
         }
-        KiiObject levelRecord = Login.User.Bucket("worlds").NewKiiObject();
-        levelRecord["worldId"] = worldObj.Uri;
-        levelRecord["expires"] = worldObj["expires"];
-        levelRecord.Save(false);
     }
 
     void PopulateWorld (JsonArray worldObjects) {
@@ -87,8 +81,33 @@ public class LevelGen : MonoBehaviour {
             JsonObject obj = worldObjects.GetJsonObject(i);
             if (obj.GetString("type") == "island") {
                 PlaceIsland(obj);
+            } else if (obj.GetString("type") == "sign") {
+                PlaceSign(obj);
             }
         }
+    }
+
+    void ClearSpawnedObjects () {
+        while (spawnedObjects.Count > 0) {
+            GameObject obj = spawnedObjects[0];
+            spawnedObjects.RemoveAt(0);
+            Destroy(obj);
+        }
+    }
+
+    public void AddSign (Vector3 pos, string owner, string message) {
+        JsonObject newSign = CreateSign(pos, owner, message);
+        AddObjectRefreshSave(newSign);
+    }
+
+    void AddObjectRefreshSave (JsonObject newObj) {
+        World.Refresh();
+        JsonArray ja = World.GetJsonArray("objects");
+        ja.Put(newObj);
+        World["objects"] = ja;
+        ClearSpawnedObjects();
+        PopulateWorld(World.GetJsonArray("objects"));
+        World.Save();
     }
 
     static JsonObject GenerateIsland () {
@@ -106,6 +125,18 @@ public class LevelGen : MonoBehaviour {
         return obj;
     }
 
+    static JsonObject CreateSign(Vector3 position, string owner,
+                                 string message) {
+        JsonObject obj = new JsonObject();
+        obj.Put("type", "sign");
+        obj.Put("x", position.x);
+        obj.Put("y", position.y);
+        obj.Put("z", position.z);
+        obj.Put("owner", owner);
+        obj.Put("message", message);
+        return obj;
+    }
+
     void PlaceIsland (JsonObject islandJson) {
         float size = (float) islandJson.GetDouble("size");
         float height = (float) islandJson.GetDouble("height");
@@ -116,6 +147,21 @@ public class LevelGen : MonoBehaviour {
         island.transform.position = new Vector3(xPos, 0f, zPos);
         island.transform.localScale = new Vector3(size, height * 2f, size);
         spawnedObjects.Add(island);
+    }
+
+    void PlaceSign (JsonObject signJson) {
+        float x = (float) signJson.GetDouble("x");
+        float y = (float) signJson.GetDouble("y");
+        float z = (float) signJson.GetDouble("z");
+        string owner = signJson.GetString("owner");
+        string message = signJson.GetString("message");
+
+        GameObject sign = Instantiate<GameObject>(signPrefab);
+        sign.transform.position = new Vector3(x, y, z);
+        Sign signComp = sign.GetComponent<Sign>();
+        signComp.owner = owner;
+        signComp.message = message;
+        spawnedObjects.Add(sign);
     }
 
     public Vector3 FindSuitableSpawn () {
@@ -133,5 +179,41 @@ public class LevelGen : MonoBehaviour {
             }
         }
         return tempSpawn;
+    }
+
+    public void Travel (bool goHome) {
+        Debug.LogError("WOT");
+        System.DateTime queryStart = System.DateTime.UtcNow;
+        KiiClause recentClause = KiiClause.GreaterThan("expires",
+                                                       queryStart.Ticks);
+        KiiQuery worldsQuery;
+        if (goHome) {
+            KiiClause mineClause = KiiClause.Equals("owner",
+                                                    Login.User.Username);
+            worldsQuery = new KiiQuery(KiiClause.And(recentClause,
+                                                     mineClause));
+        } else {
+            KiiClause notMineClause = KiiClause.NotEquals("owner",
+                                                          Login.User.Username);
+            worldsQuery = new KiiQuery(KiiClause.And(recentClause,
+                                                     notMineClause));
+        }
+
+        KiiQueryResult<KiiObject> result
+            = Kii.Bucket("worlds").Query(worldsQuery);
+        if (result.Count == 0) {
+            if (!goHome) {
+                Debug.Log("No other places! Going back home.");
+                Travel(true);
+            } else {
+                Debug.LogError("Could not find home!");
+            }
+        } else {
+            ClearSpawnedObjects();
+            KiiObject latest = result[0];
+            World = latest;
+            Debug.Log("Successfully travelled " + (goHome ? "home." : "away."));
+            PopulateWorld(latest.GetJsonArray("objects"));
+        }
     }
 }
