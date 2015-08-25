@@ -351,6 +351,79 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 181c1f9224284674d84ab6b819ec4d42, type: 2}
   m_IsPrefabParent: 0
+--- !u!1 &817604078 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 183314, guid: b5c38322ba9bf9f4d95d0610f2035bdd, type: 2}
+  m_PrefabInternal: {fileID: 1478161623}
+--- !u!82 &817604079
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 817604078}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 1e+06
+  Pan2D: 0
+  rolloffMode: 1
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
 --- !u!1001 &889900002
 Prefab:
   m_ObjectHideFlags: 0
@@ -618,8 +691,54 @@ Prefab:
       propertyPath: m_Color.b
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8290180, guid: 32a5bc899796bd04dab93436d0ff15ad, type: 2}
+      propertyPath: MaxDistance
+      value: 1e+06
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 32a5bc899796bd04dab93436d0ff15ad, type: 2}
+  m_IsPrefabParent: 0
+--- !u!1001 &1389945692
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 432800, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 392
+      objectReference: {fileID: 0}
+    - target: {fileID: 432800, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 65
+      objectReference: {fileID: 0}
+    - target: {fileID: 432800, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 432800, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 432800, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 432800, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 432800, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 432800, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
+      propertyPath: m_RootOrder
+      value: 10
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 25cfea621ab33e2429860b7a5fd6cbcb, type: 2}
   m_IsPrefabParent: 0
 --- !u!1001 &1478161623
 Prefab:
@@ -660,6 +779,10 @@ Prefab:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11498696, guid: b5c38322ba9bf9f4d95d0610f2035bdd, type: 2}
+      propertyPath: travelSound
+      value: 
+      objectReference: {fileID: 8300000, guid: c543c9a95d353b8478259649f1ca69ac, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: b5c38322ba9bf9f4d95d0610f2035bdd, type: 2}
   m_IsPrefabParent: 0

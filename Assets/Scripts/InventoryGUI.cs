@@ -24,6 +24,9 @@ public class InventoryGUI : MonoBehaviour {
     public Sprite pickupSprite;
     public Sprite dropSprite;
 
+    public AudioClip pickupSound;
+    public AudioClip dropSound;
+
     void Awake () {
         holdingItem = false;
         heldItemType = "bush";
@@ -142,7 +145,10 @@ public class InventoryGUI : MonoBehaviour {
             lg.AddItem(tt.transform.position, heldItemType,
                        heldItemInitVal);
             holdingItem = false;
-            UpdateItemGUI();    
+            UpdateItemGUI();
+            AudioSource audio = GetComponent<AudioSource>();
+            audio.clip = dropSound;
+            audio.Play();
         } else if (CanPickupItemHere(closest, tt.transform.position)) {
             lg.UpdateItem(closest.transform.position, closest.itemName,
                           closest.initValue, closest.level + 1);
@@ -150,6 +156,9 @@ public class InventoryGUI : MonoBehaviour {
             heldItemType = closest.itemName;
             heldItemInitVal = closest.initValue;
             UpdateItemGUI();
+            AudioSource audio = GetComponent<AudioSource>();
+            audio.clip = pickupSound;
+            audio.Play();
         }
     }
 

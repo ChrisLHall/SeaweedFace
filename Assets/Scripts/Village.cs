@@ -54,7 +54,7 @@ public class Village : MonoBehaviour {
                         .FindClosest(transform.position);
                 if (TotalPoints >= POINTS_FOR_CASTLE && closest != null) {
                     ShowLaser(closest.transform.position);
-                    // TODO play a sound
+                    GetComponent<AudioSource>().Play();
                     closest.BlowUp();
                 }
             }

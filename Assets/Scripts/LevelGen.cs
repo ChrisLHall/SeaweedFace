@@ -51,6 +51,8 @@ public class LevelGen : MonoBehaviour {
 
     List<GameObject> spawnedObjects;
 
+    public AudioClip travelSound;
+
     public KiiObject World { get; private set; }
     public int Prestige { get; private set; }
 
@@ -429,6 +431,10 @@ public class LevelGen : MonoBehaviour {
         }
         player.FindStartPos();
         FindObjectOfType<AlienMgr>().ClearAliens();
+
+        AudioSource audio = GetComponent<AudioSource>();
+        audio.clip = travelSound;
+        audio.Play();
     }
 
     void RecalcPlayerPrestige () {

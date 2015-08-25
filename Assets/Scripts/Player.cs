@@ -58,6 +58,7 @@ public class Player : MonoBehaviour {
             rb.AddForce(physicsCtrlVec * CTRL_VEC_STRENGTH, ForceMode.Impulse);
             rb.velocity = Vector3.ClampMagnitude(rb.velocity, MAX_VELOCITY);
             physicsCtrlVec = Vector3.zero;
+            GetComponent<AudioSource>().Play();
         }
 
         if (transform.position.y < MAP_BOTTOM) {

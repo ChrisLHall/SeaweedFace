@@ -61,4 +61,10 @@ public class AlienMgr : MonoBehaviour {
         }
         return closest;
     }
+
+    public bool AliensPresent {
+        get {
+            return AliensNeededNow() > 0;
+        }
+    }
 }
