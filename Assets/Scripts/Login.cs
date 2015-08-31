@@ -49,13 +49,13 @@ public class Login : MonoBehaviour {
 
     bool ValidateLogin () {
         if (username.text.Trim().Length < 5) {
-            error.text = "Username must be 5+ characters!";
+            setErrText = "Username must be 5+ characters!";
             return false;
         } else if (password.text.Trim().Length < 8) {
-            error.text = "Password must be 8+ characters!";
+            setErrText = "Password must be 8+ characters!";
             return false;
         } else if (username.text.Trim().StartsWith("NOBODY")) {
-            error.text = "Username cannot start with NOBODY; it is reserved.";
+            setErrText = "Username cannot start with NOBODY; it is reserved.";
             return false;
         }
         return true;
