@@ -15,16 +15,18 @@ public class SignGUI : MonoBehaviour {
 	void Update () {
         Sign[] signs = FindObjectsOfType<Sign>();
         if (signs.Length > 0) {
-            double closestDist = signs.Min(
-                    (Sign s) => (s.transform.position - player.transform.position)
-                    .sqrMagnitude);
+            text.text = "";
+            float closestDist = 100f;
+            Sign closest = signs[0];
+            foreach (Sign sign in signs) {
+                float dist = (sign.transform.position - player.transform.position).sqrMagnitude;
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closest = sign;
+                }
+            }
             if (closestDist < SIGN_READ_DIST_SQR) {
-                Sign closest = signs.First((Sign s) =>
-                        ((s.transform.position - player.transform.position)
-                        .sqrMagnitude == closestDist));
                 text.text = closest.owner + " says: \"" + closest.message + "\"";
-            } else {
-                text.text = "";
             }
         }
 	}
